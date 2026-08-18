@@ -846,7 +846,7 @@ async function callGroq(messages, opts){
       'Authorization':'Bearer ' + state.settings.groqKey
     },
     body: JSON.stringify({
-model: 'google/gemma-2-9b-it:free',
+model: 'llama-3.1-8b-instant',
       messages: messages,
       temperature: opts.temperature != null ? opts.temperature : 0.85,
       max_tokens: opts.maxTokens || 1024
