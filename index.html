@@ -350,7 +350,7 @@
         <span class="status-dot" id="groqStatusDot"></span>
         <span id="groqStatusText">Groq API kontrol ediliyor...</span>
       </div>
-      <div class="status-line" style="font-size:10.5px;">v1.0 · llama-3.1-8b-instant</div>
+      <div class="status-line" style="font-size:10.5px;">v1.0 · llama3-70b-8192</div>
     </div>
   </aside>
 
@@ -538,7 +538,7 @@
       <h4>Groq API</h4>
       <label class="small">Groq API Key</label>
       <input type="password" id="set_groqKey" placeholder="gsk_...">
-      <div class="help-txt">console.groq.com üzerinden ücretsiz alabilirsin. Model: llama-3.1-8b-instant.</div>
+      <div class="help-txt">console.groq.com üzerinden ücretsiz alabilirsin. Model: llama3-70b-8192.</div>
     </div>
 
     <div class="modal-section">
@@ -846,7 +846,7 @@ async function callGroq(messages, opts){
       'Authorization':'Bearer ' + state.settings.groqKey
     },
     body: JSON.stringify({
-      model: 'llama-3.1-8b-instant',
+      model: 'llama3-70b-8192',
       messages: messages,
       temperature: opts.temperature != null ? opts.temperature : 0.85,
       max_tokens: opts.maxTokens || 1024
