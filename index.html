@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KANKA.AI — Otonom Yapay Zeka Platformu</title>
+<style>
+  :root{
+    --bg:#09090b;
+    --bg2:#111114;
+    --bg3:#18181b;
+    --border:#27272a;
+    --green:#22c55e;
+    --green-dim:#16a34a;
+    --purple:#a855f7;
+    --purple-dim:#7e22ce;
+    --text:#e4e4e7;
+    --text-dim:#a1a1aa;
+    --text-faint:#71717a;
+    --danger:#ef4444;
+    --radius:12px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    overflow:hidden;
+  }
+  ::-webkit-scrollbar{width:8px; height:8px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--border); border-radius:8px;}
+  ::-webkit-scrollbar-thumb:hover{background:var(--green-dim);}
+
+  .app{ display:flex; height:100vh; width:100vw; }
+
+  /* ---------- SIDEBAR ---------- */
+  .sidebar{
+    width:270px;
+    min-width:270px;
+    background:linear-gradient(180deg, var(--bg2), var(--bg));
+    border-right:1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    padding:18px 14px;
+  }
+  .logo{
+    display:flex; align-items:center; gap:10px;
+    padding:6px 4px 20px 4px;
+    border-bottom:1px solid var(--border);
+    margin-bottom:16px;
+  }
+  .logo-badge{
+    width:38px; height:38px; border-radius:10px;
+    background:linear-gradient(135deg, var(--green), var(--purple));
+    display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:16px; color:#000;
+    box-shadow:0 0 18px rgba(34,197,94,0.45);
+  }
+  .logo-text{ font-weight:800; font-size:18px; letter-spacing:0.5px; }
+  .logo-text span{ color:var(--green); }
+  .logo-sub{ font-size:11px; color:var(--text-faint); margin-top:1px;}
+
+  .nav-btn{
+    display:flex; align-items:center; gap:10px;
+    padding:11px 12px; margin-bottom:6px;
+    border-radius:10px; cursor:pointer;
+    color:var(--text-dim); font-size:14px; font-weight:500;
+    border:1px solid transparent;
+    transition:all .15s ease;
+    user-select:none;
+  }
+  .nav-btn:hover{ background:var(--bg3); color:var(--text); }
+  .nav-btn.active{
+    background:rgba(34,197,94,0.1);
+    border-color:rgba(34,197,94,0.35);
+    color:var(--green);
+  }
+  .nav-btn .ic{ font-size:16px; width:20px; text-align:center; }
+  .nav-btn .badge{
+    margin-left:auto; font-size:9px; padding:2px 6px; border-radius:20px;
+    background:rgba(168,85,247,0.18); color:var(--purple); font-weight:700;
+  }
+
+  .nav-toggle{ position:relative; }
+  .toggle-switch{
+    width:34px; height:18px; border-radius:20px; background:var(--bg3);
+    margin-left:auto; position:relative; border:1px solid var(--border); flex-shrink:0;
+    transition:all .2s;
+  }
+  .toggle-switch.on{ background:rgba(34,197,94,0.3); border-color:var(--green); }
+  .toggle-switch::after{
+    content:''; position:absolute; top:1px; left:1px; width:14px; height:14px; border-radius:50%;
+    background:var(--text-dim); transition:all .2s;
+  }
+  .toggle-switch.on::after{ left:17px; background:var(--green); box-shadow:0 0 8px var(--green); }
+
+  .history-panel{
+    margin-top:8px; padding-top:8px; border-top:1px solid var(--border);
+    display:none; flex-direction:column; gap:4px; max-height:220px; overflow-y:auto;
+  }
+  .history-panel.open{ display:flex; }
+  .history-item{
+    padding:8px 10px; border-radius:8px; font-size:12.5px; color:var(--text-dim);
+    cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    border:1px solid transparent;
+  }
+  .history-item:hover{ background:var(--bg3); color:var(--text); border-color:var(--border); }
+  .history-empty{ font-size:12px; color:var(--text-faint); padding:8px 10px; }
+
+  .sidebar-footer{ margin-top:auto; padding-top:14px; border-top:1px solid var(--border); }
+  .status-line{ font-size:11px; color:var(--text-faint); padding:8px 10px; display:flex; align-items:center; gap:6px; }
+  .status-dot{ width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); }
+  .status-dot.off{ background:var(--danger); box-shadow:0 0 8px var(--danger); }
+
+  /* ---------- MAIN ---------- */
+  .main{ flex:1; display:flex; flex-direction:column; min-width:0; }
+  .tabbar{
+    display:flex; align-items:center; gap:4px;
+    padding:14px 22px; border-bottom:1px solid var(--border);
+    background:rgba(17,17,20,0.5); backdrop-filter:blur(6px);
+  }
+  .tab-btn{
+    padding:9px 16px; border-radius:9px; font-size:13.5px; font-weight:600;
+    color:var(--text-dim); cursor:pointer; border:1px solid transparent;
+    transition:all .15s;
+  }
+  .tab-btn:hover{ color:var(--text); background:var(--bg3); }
+  .tab-btn.active{
+    color:#000; background:linear-gradient(135deg, var(--green), #16a34a);
+    box-shadow:0 0 16px rgba(34,197,94,0.35);
+  }
+  .tabbar-right{ margin-left:auto; display:flex; align-items:center; gap:10px; }
+  .agent-pill{
+    font-size:11px; padding:5px 10px; border-radius:20px; font-weight:700;
+    background:rgba(168,85,247,0.15); color:var(--purple); border:1px solid rgba(168,85,247,0.35);
+    display:none; align-items:center; gap:5px;
+  }
+  .agent-pill.show{ display:flex; }
+  .pulse{ width:6px; height:6px; border-radius:50%; background:var(--purple); animation:pulse 1.4s infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.3;} }
+
+  .tab-content{ flex:1; overflow:hidden; display:none; flex-direction:column; min-height:0; }
+  .tab-content.active{ display:flex; }
+
+  /* ---------- CHAT ---------- */
+  .chat-window{ flex:1; overflow-y:auto; padding:22px 0; }
+  .chat-inner{ max-width:820px; margin:0 auto; padding:0 24px; display:flex; flex-direction:column; gap:16px; }
+  .msg-row{ display:flex; gap:12px; align-items:flex-start; }
+  .msg-row.user{ flex-direction:row-reverse; }
+  .avatar{
+    width:32px; height:32px; border-radius:9px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800;
+  }
+  .avatar.bot{ background:linear-gradient(135deg, var(--green), var(--purple)); color:#000; }
+  .avatar.user{ background:var(--bg3); border:1px solid var(--border); color:var(--text-dim); }
+  .bubble{
+    max-width:72%; padding:12px 15px; border-radius:14px; font-size:14.5px; line-height:1.55;
+    white-space:pre-wrap; word-wrap:break-word;
+  }
+  .msg-row.bot .bubble{ background:var(--bg2); border:1px solid var(--border); border-top-left-radius:4px; }
+  .msg-row.user .bubble{ background:linear-gradient(135deg, rgba(34,197,94,0.16), rgba(168,85,247,0.1)); border:1px solid rgba(34,197,94,0.3); border-top-right-radius:4px; }
+  .bubble img.chat-img{ max-width:100%; border-radius:10px; margin-top:6px; display:block; }
+  .bubble .meta-tag{ font-size:10px; color:var(--purple); font-weight:700; margin-bottom:5px; display:block; letter-spacing:0.5px;}
+  .typing{ display:flex; gap:4px; padding:4px 0; }
+  .typing span{ width:6px; height:6px; border-radius:50%; background:var(--green); animation:blink 1.2s infinite; }
+  .typing span:nth-child(2){ animation-delay:.2s; }
+  .typing span:nth-child(3){ animation-delay:.4s; }
+  @keyframes blink{ 0%,100%{opacity:.2;} 50%{opacity:1;} }
+
+  .chat-empty{ margin:auto; text-align:center; color:var(--text-faint); }
+  .chat-empty .big{ font-size:20px; font-weight:800; color:var(--text); margin-bottom:6px; }
+  .chat-empty .big span{ color:var(--green); }
+  .chips{ display:flex; gap:8px; margin-top:16px; flex-wrap:wrap; justify-content:center; }
+  .chip{
+    padding:8px 14px; border-radius:20px; border:1px solid var(--border); background:var(--bg2);
+    font-size:12.5px; color:var(--text-dim); cursor:pointer;
+  }
+  .chip:hover{ border-color:var(--green); color:var(--green); }
+
+  .input-bar{ padding:16px 24px 22px; border-top:1px solid var(--border); }
+  .input-inner{ max-width:820px; margin:0 auto; display:flex; gap:10px; align-items:flex-end; }
+  .input-box{
+    flex:1; background:var(--bg2); border:1px solid var(--border); border-radius:14px;
+    padding:12px 14px; display:flex; align-items:flex-end; gap:8px;
+  }
+  .input-box:focus-within{ border-color:var(--green); box-shadow:0 0 0 3px rgba(34,197,94,0.12); }
+  #chatInput{
+    flex:1; background:transparent; border:none; outline:none; resize:none;
+    color:var(--text); font-size:14.5px; font-family:inherit; max-height:160px; line-height:1.4;
+  }
+  #chatInput::placeholder{ color:var(--text-faint); }
+  .send-btn{
+    width:38px; height:38px; border-radius:10px; border:none; cursor:pointer;
+    background:linear-gradient(135deg, var(--green), var(--green-dim)); color:#000; font-weight:800;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:16px;
+    transition:transform .1s;
+  }
+  .send-btn:hover{ transform:scale(1.06); }
+  .send-btn:disabled{ opacity:.4; cursor:not-allowed; transform:none; }
+  .hint-line{ text-align:center; font-size:11px; color:var(--text-faint); margin-top:8px; }
+
+  /* ---------- MEDIA (Görsel & Video) ---------- */
+  .media-wrap{ flex:1; overflow-y:auto; padding:24px; }
+  .media-inner{ max-width:1000px; margin:0 auto; }
+  .section-title{ font-size:15px; font-weight:800; margin-bottom:4px; display:flex; align-items:center; gap:8px;}
+  .section-title .dot{ width:8px; height:8px; border-radius:50%; }
+  .section-sub{ font-size:12.5px; color:var(--text-faint); margin-bottom:14px; }
+  .panel{ background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:18px; margin-bottom:24px; }
+  .field-row{ display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .field-row .grow{ flex:1; min-width:200px; }
+  label.small{ font-size:11.5px; color:var(--text-dim); display:block; margin-bottom:5px; font-weight:600; }
+  input[type=text], input[type=password], input[type=url], input[type=datetime-local], textarea, select{
+    width:100%; background:var(--bg3); border:1px solid var(--border); border-radius:9px;
+    padding:10px 12px; color:var(--text); font-size:13.5px; font-family:inherit; outline:none;
+  }
+  input:focus, textarea:focus, select:focus{ border-color:var(--green); }
+  textarea{ resize:vertical; min-height:70px; }
+  .btn{
+    padding:10px 18px; border-radius:9px; border:none; cursor:pointer; font-weight:700; font-size:13.5px;
+    background:linear-gradient(135deg, var(--green), var(--green-dim)); color:#000;
+    transition:transform .1s; white-space:nowrap;
+  }
+  .btn:hover{ transform:translateY(-1px); }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
+  .btn.purple{ background:linear-gradient(135deg, var(--purple), var(--purple-dim)); color:#fff; }
+  .btn.outline{ background:transparent; border:1px solid var(--border); color:var(--text-dim); }
+  .btn.outline:hover{ border-color:var(--green); color:var(--green); }
+  .btn.danger{ background:transparent; border:1px solid rgba(239,68,68,0.4); color:var(--danger); }
+
+  .gallery{ display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:14px; }
+  .g-item{ background:var(--bg3); border:1px solid var(--border); border-radius:10px; overflow:hidden; position:relative; }
+  .g-item img, .g-item video{ width:100%; height:200px; object-fit:cover; display:block; }
+  .g-item .g-cap{ padding:8px 10px; font-size:11.5px; color:var(--text-dim); }
+  .g-item .g-dl{
+    position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.6); border:1px solid var(--border);
+    border-radius:7px; padding:5px 8px; font-size:11px; color:var(--text); cursor:pointer; text-decoration:none;
+  }
+  .loader-box{ display:flex; align-items:center; gap:10px; color:var(--text-dim); font-size:13px; padding:20px; justify-content:center;}
+  .spinner{ width:18px; height:18px; border-radius:50%; border:2.5px solid var(--border); border-top-color:var(--green); animation:spin 0.7s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg);} }
+
+  /* ---------- WEB AGENT ---------- */
+  .agent-log{ display:flex; flex-direction:column; gap:10px; margin-top:16px; }
+  .log-card{ background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:14px; }
+  .log-card .lc-title{ font-size:13.5px; font-weight:700; color:var(--green); margin-bottom:4px; }
+  .log-card .lc-url{ font-size:11px; color:var(--purple); margin-bottom:6px; word-break:break-all; }
+  .log-card .lc-body{ font-size:13px; color:var(--text-dim); line-height:1.5; white-space:pre-wrap; }
+  .result-item{ padding:10px 0; border-bottom:1px solid var(--border); }
+  .result-item:last-child{ border-bottom:none; }
+  .result-item a{ color:var(--green); font-size:13.5px; font-weight:700; text-decoration:none; }
+  .result-item a:hover{ text-decoration:underline; }
+  .result-item p{ font-size:12.5px; color:var(--text-dim); margin-top:3px; }
+
+  /* ---------- SOCIAL ---------- */
+  .platform-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
+  .plat-card{
+    border:1px solid var(--border); background:var(--bg3); border-radius:10px; padding:12px; text-align:center;
+    cursor:pointer; font-size:12.5px; font-weight:700; color:var(--text-dim); transition:all .15s;
+  }
+  .plat-card.sel{ border-color:var(--green); color:var(--green); background:rgba(34,197,94,0.08); box-shadow:0 0 12px rgba(34,197,94,0.15); }
+  .plat-card .pic{ font-size:20px; margin-bottom:6px; display:block; }
+  .queue-item{ background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:10px; display:flex; gap:12px; align-items:flex-start; }
+  .queue-item .qi-body{ flex:1; }
+  .qi-plat{ font-size:10.5px; font-weight:800; color:var(--purple); text-transform:uppercase; letter-spacing:0.5px; }
+  .qi-text{ font-size:13px; color:var(--text); margin:4px 0; }
+  .qi-meta{ font-size:11px; color:var(--text-faint); }
+  .qi-status{ font-size:11px; font-weight:700; padding:3px 8px; border-radius:20px; }
+  .qi-status.ok{ background:rgba(34,197,94,0.15); color:var(--green); }
+  .qi-status.pending{ background:rgba(234,179,8,0.15); color:#eab308; }
+  .qi-status.err{ background:rgba(239,68,68,0.15); color:var(--danger); }
+  .qi-del{ cursor:pointer; color:var(--text-faint); font-size:16px; }
+  .qi-del:hover{ color:var(--danger); }
+
+  /* ---------- MODAL ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.65); backdrop-filter:blur(3px);
+    display:none; align-items:center; justify-content:center; z-index:100;
+  }
+  .modal-overlay.open{ display:flex; }
+  .modal{
+    width:520px; max-width:92vw; max-height:88vh; overflow-y:auto;
+    background:var(--bg2); border:1px solid var(--border); border-radius:16px; padding:26px;
+    box-shadow:0 0 60px rgba(34,197,94,0.08);
+  }
+  .modal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+  .modal-head h3{ font-size:17px; font-weight:800; }
+  .modal-head h3 span{ color:var(--green); }
+  .close-x{ cursor:pointer; font-size:20px; color:var(--text-faint); }
+  .close-x:hover{ color:var(--text); }
+  .modal-section{ margin-bottom:16px; }
+  .modal-section h4{ font-size:12px; color:var(--purple); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:8px; }
+  .help-txt{ font-size:11px; color:var(--text-faint); margin-top:4px; }
+  .save-row{ display:flex; gap:10px; margin-top:20px; }
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    background:var(--bg2); border:1px solid var(--green); color:var(--text); padding:12px 20px;
+    border-radius:10px; font-size:13px; z-index:200; display:none; box-shadow:0 4px 24px rgba(0,0,0,0.4);
+  }
+  .toast.show{ display:block; animation:toastIn .25s ease; }
+  .toast.err{ border-color:var(--danger); }
+  @keyframes toastIn{ from{ opacity:0; transform:translate(-50%,10px);} to{ opacity:1; transform:translate(-50%,0);} }
+
+  @media (max-width:820px){
+    .sidebar{ position:fixed; z-index:50; height:100vh; transform:translateX(-100%); transition:transform .2s; }
+    .sidebar.open{ transform:translateX(0); }
+    .platform-grid{ grid-template-columns:repeat(2,1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="logo">
+      <div class="logo-badge">K</div>
+      <div>
+        <div class="logo-text">KANKA<span>.AI</span></div>
+        <div class="logo-sub">senin dijital kankan</div>
+      </div>
+    </div>
+
+    <div class="nav-btn active" data-nav="newchat" onclick="newChat()">
+      <span class="ic">✚</span> Yeni Sohbet
+    </div>
+    <div class="nav-btn" data-nav="history" onclick="toggleHistory()">
+      <span class="ic">🕘</span> Sohbet Geçmişi
+    </div>
+    <div class="history-panel" id="historyPanel"></div>
+
+    <div class="nav-btn nav-toggle" onclick="toggleAutonomous(event)">
+      <span class="ic">🤖</span> Otonom Agent Modu
+      <div class="toggle-switch" id="autoToggle"></div>
+    </div>
+
+    <div class="nav-btn" onclick="switchTab('media')">
+      <span class="ic">🎨</span> Görsel &amp; Video Stüdyosu
+    </div>
+    <div class="nav-btn" onclick="switchTab('social')">
+      <span class="ic">📡</span> Sosyal Medya Otopilotu
+    </div>
+    <div class="nav-btn" onclick="openSettings()">
+      <span class="ic">⚙️</span> Ayarlar
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="status-line">
+        <span class="status-dot" id="groqStatusDot"></span>
+        <span id="groqStatusText">Groq API kontrol ediliyor...</span>
+      </div>
+      <div class="status-line" style="font-size:10.5px;">v1.0 · llama-3.3-70b-versatile</div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <div class="tabbar">
+      <div class="tab-btn active" data-tab="chat" onclick="switchTab('chat')">💬 Sohbet</div>
+      <div class="tab-btn" data-tab="media" onclick="switchTab('media')">🖼️ Görsel &amp; Video Üretici</div>
+      <div class="tab-btn" data-tab="webagent" onclick="switchTab('webagent')">🌐 Web Agent / Canlı Arama</div>
+      <div class="tab-btn" data-tab="social" onclick="switchTab('social')">📣 Social Auto-Post</div>
+      <div class="tabbar-right">
+        <div class="agent-pill" id="agentPill"><span class="pulse"></span> OTONOM MOD AKTİF</div>
+      </div>
+    </div>
+
+    <!-- ---- CHAT TAB ---- -->
+    <section class="tab-content active" id="tab-chat">
+      <div class="chat-window" id="chatWindow">
+        <div class="chat-inner" id="chatInner">
+          <div class="chat-empty" id="chatEmpty">
+            <div class="big">Naber Kadir, <span>KANKA.AI</span> hazır 🤙</div>
+            <div>Bi' şeyler sor, "resim yap", "video üret" de ya da net konuş, hallederiz.</div>
+            <div class="chips">
+              <div class="chip" onclick="quickPrompt('Selam kanka, bugün moralim bozuk, kafa dağıtsak mı?')">Kafa dağıtalım</div>
+              <div class="chip" onclick="quickPrompt('Bana neon ışıklarla aydınlanmış siber punk bir şehir resmi çiz')">Resim yap</div>
+              <div class="chip" onclick="quickPrompt('Groq API hakkında son gelişmeleri araştır')">Web\'de araştır</div>
+              <div class="chip" onclick="quickPrompt('Bana bir video prompt önerisi yaz: uzayda süzülen astronot')">Video fikri</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="input-bar">
+        <div class="input-inner">
+          <div class="input-box">
+            <textarea id="chatInput" rows="1" placeholder="Kanka'na yaz... (Enter: gönder, Shift+Enter: yeni satır)" oninput="autoGrow(this)" onkeydown="handleChatKey(event)"></textarea>
+          </div>
+          <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+        </div>
+        <div class="hint-line">KANKA.AI hata yapabilir, önemli kararları teyit et. Otonom Mod: resim/video/arama isteklerini otomatik yönetir.</div>
+      </div>
+    </section>
+
+    <!-- ---- MEDIA TAB ---- -->
+    <section class="tab-content" id="tab-media">
+      <div class="media-wrap">
+        <div class="media-inner">
+
+          <div class="section-title"><span class="dot" style="background:var(--green);"></span> Görsel Üretici</div>
+          <div class="section-sub">Pollinations.ai motoruyla anında görsel üretimi — API key gerekmez.</div>
+          <div class="panel">
+            <div class="field-row">
+              <div class="grow">
+                <label class="small">Görsel Prompt</label>
+                <input type="text" id="imgPrompt" placeholder="Örn: ay ışığında duran bir kurt, sinematik, 8k">
+              </div>
+              <div style="width:140px;">
+                <label class="small">Oran</label>
+                <select id="imgRatio">
+                  <option value="1024x1024">Kare</option>
+                  <option value="1280x768">Yatay</option>
+                  <option value="768x1280">Dikey</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn" onclick="generateImage()">🎨 Görsel Üret</button>
+          </div>
+          <div id="imgLoader"></div>
+          <div class="gallery" id="imgGallery"></div>
+
+          <div style="height:28px;"></div>
+
+          <div class="section-title"><span class="dot" style="background:var(--purple);"></span> Video Üretim Modülü</div>
+          <div class="section-sub">Prompt'u Fal.ai video modeline gönderir (Ayarlar'dan Fal.ai key gerekli).</div>
+          <div class="panel">
+            <div class="field-row">
+              <div class="grow">
+                <label class="small">Video Prompt</label>
+                <input type="text" id="vidPrompt" placeholder="Örn: dalgalar üzerinde süzülen bir yelkenli, ağır çekim">
+              </div>
+              <div style="width:220px;">
+                <label class="small">Fal.ai Model ID</label>
+                <input type="text" id="vidModel" value="fal-ai/fast-svd/text-to-video" placeholder="fal-ai/...">
+              </div>
+            </div>
+            <button class="btn purple" onclick="generateVideo()">🎬 Video Üret</button>
+          </div>
+          <div id="vidLoader"></div>
+          <div class="gallery" id="vidGallery"></div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ---- WEB AGENT TAB ---- -->
+    <section class="tab-content" id="tab-webagent">
+      <div class="media-wrap">
+        <div class="media-inner">
+          <div class="section-title"><span class="dot" style="background:var(--green);"></span> Web Agent — Canlı Arama</div>
+          <div class="section-sub">DuckDuckGo &amp; Wikipedia üzerinden canlı arama yapar, LLM ile özetler.</div>
+          <div class="panel">
+            <div class="field-row">
+              <div class="grow">
+                <label class="small">Arama Sorgusu</label>
+                <input type="text" id="searchQuery" placeholder="Örn: 2026 yapay zeka gelişmeleri" onkeydown="if(event.key==='Enter')runWebSearch()">
+              </div>
+            </div>
+            <button class="btn" onclick="runWebSearch()">🔍 Ara ve Özetle</button>
+          </div>
+          <div id="searchLoader"></div>
+          <div id="searchSummary"></div>
+          <div class="agent-log" id="searchResults"></div>
+
+          <div style="height:28px;"></div>
+
+          <div class="section-title"><span class="dot" style="background:var(--purple);"></span> Site Özetleyici</div>
+          <div class="section-sub">Bir URL ver, KANKA.AI sayfayı çekip senin için özetlesin.</div>
+          <div class="panel">
+            <div class="field-row">
+              <div class="grow">
+                <label class="small">Web Sitesi URL</label>
+                <input type="url" id="siteUrl" placeholder="https://ornek.com/makale">
+              </div>
+            </div>
+            <button class="btn purple" onclick="summarizeSite()">📄 Siteyi Özetle</button>
+          </div>
+          <div id="siteLoader"></div>
+          <div class="agent-log" id="siteResults"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---- SOCIAL TAB ---- -->
+    <section class="tab-content" id="tab-social">
+      <div class="media-wrap">
+        <div class="media-inner">
+          <div class="section-title"><span class="dot" style="background:var(--green);"></span> Sosyal Medya Otopilotu</div>
+          <div class="section-sub">Platform seç, içeriği yaz, hemen paylaş ya da ileri bir tarihe planla.</div>
+
+          <div class="panel">
+            <label class="small">Platform</label>
+            <div class="platform-grid">
+              <div class="plat-card sel" data-plat="discord" onclick="selectPlatform('discord')"><span class="pic">💬</span>Discord</div>
+              <div class="plat-card" data-plat="webhook" onclick="selectPlatform('webhook')"><span class="pic">🔗</span>Webhook</div>
+              <div class="plat-card" data-plat="twitter" onclick="selectPlatform('twitter')"><span class="pic">𝕏</span>X / Twitter</div>
+              <div class="plat-card" data-plat="instagram" onclick="selectPlatform('instagram')"><span class="pic">📸</span>Instagram</div>
+            </div>
+
+            <label class="small">İçerik</label>
+            <textarea id="postContent" placeholder="Ne paylaşmak istiyorsun kanka?"></textarea>
+
+            <div class="field-row" style="margin-top:10px;">
+              <div class="grow">
+                <label class="small">Görsel URL (opsiyonel — Görsel Stüdyosu'nda ürettiğini yapıştırabilirsin)</label>
+                <input type="text" id="postImage" placeholder="https://image.pollinations.ai/prompt/...">
+              </div>
+              <div style="width:220px;">
+                <label class="small">Planla (boş = hemen paylaş)</label>
+                <input type="datetime-local" id="postSchedule">
+              </div>
+            </div>
+
+            <div class="save-row">
+              <button class="btn" onclick="queuePost()">🚀 Paylaş / Planla</button>
+              <button class="btn outline" onclick="document.getElementById('postContent').value=''; document.getElementById('postImage').value='';">Temizle</button>
+            </div>
+          </div>
+
+          <div class="section-title" style="margin-top:10px;"><span class="dot" style="background:var(--purple);"></span> Gönderi Kuyruğu &amp; Geçmiş</div>
+          <div id="postQueue"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ============ SETTINGS MODAL ============ -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>⚙️ <span>KANKA.AI</span> Ayarları</h3>
+      <div class="close-x" onclick="closeSettings()">✕</div>
+    </div>
+
+    <div class="modal-section">
+      <h4>Groq API</h4>
+      <label class="small">Groq API Key</label>
+      <input type="password" id="set_groqKey" placeholder="gsk_...">
+      <div class="help-txt">console.groq.com üzerinden ücretsiz alabilirsin. Model: llama-3.3-70b-versatile.</div>
+    </div>
+
+    <div class="modal-section">
+      <h4>Fal.ai (Video Üretimi)</h4>
+      <label class="small">Fal.ai API Key</label>
+      <input type="password" id="set_falKey" placeholder="key_id:key_secret">
+      <div class="help-txt">fal.ai/dashboard/keys üzerinden alınır.</div>
+    </div>
+
+    <div class="modal-section">
+      <h4>Sosyal Medya Bağlantıları</h4>
+      <label class="small">Discord Webhook URL</label>
+      <input type="url" id="set_discordWebhook" placeholder="https://discord.com/api/webhooks/...">
+      <div style="height:8px;"></div>
+      <label class="small">Genel Webhook URL (Zapier / Make / n8n vb.)</label>
+      <input type="url" id="set_genericWebhook" placeholder="https://hook.example.com/...">
+      <div style="height:8px;"></div>
+      <label class="small">X (Twitter) Bearer Token</label>
+      <input type="password" id="set_twitterToken" placeholder="Bearer token (opsiyonel)">
+      <div style="height:8px;"></div>
+      <label class="small">Instagram Access Token</label>
+      <input type="password" id="set_instagramToken" placeholder="Graph API access token (opsiyonel)">
+      <div class="help-txt">X ve Instagram, OAuth/CORS kısıtları yüzünden tarayıcıdan doğrudan paylaşım desteklemez. Token'lar burada saklanır; gerçek paylaşım için bir backend/proxy gerekir. Discord Webhook ve Genel Webhook tarayıcıdan direkt çalışır.</div>
+    </div>
+
+    <div class="save-row">
+      <button class="btn" onclick="saveSettings()">💾 Kaydet</button>
+      <button class="btn danger" onclick="clearSettings()">Tüm Verileri Sil</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================================
+   KANKA.AI — TEK DOSYA UYGULAMA
+   ========================================================================= */
+
+const SETTINGS_KEY = 'kanka_settings_v1';
+const SESSIONS_KEY = 'kanka_sessions_v1';
+
+const SYSTEM_PROMPT = `Sen kullanıcının 10 yıllık samimi arkadaşı ve otonom sağ kolu olan KANKA.AI'sın. Argo konuşursun, son derece zeki, esprili ve net cevaplar verirsin. Kullanıcıya Kadir diye hitap et. Hem kankası gibi sohbet et hem de web'de arama yapma, görsel/video oluşturma ve sosyal medyada paylaşım yapma görevlerini bir agent gibi eksiksiz yürüt. Cevapların kısa, samimi, esprili ama bilgi dolu olsun. Asla resmi bir asistan gibi konuşma, gerçek bir arkadaş gibi konuş.`;
+
+let state = {
+  settings: { groqKey:'', falKey:'', discordWebhook:'', genericWebhook:'', twitterToken:'', instagramToken:'' },
+  sessions: [],
+  currentSessionId: null,
+  messages: [],
+  currentTab: 'chat',
+  autonomous: false,
+  selectedPlatform: 'discord',
+  postQueue: []
+};
+
+/* ---------------- INIT ---------------- */
+function initApp(){
+  loadSettings();
+  loadSessions();
+  loadPostQueue();
+  updateStatusDot();
+  renderSidebarHistory();
+  renderPostQueue();
+  setInterval(checkScheduledPosts, 20000);
+}
+
+/* ---------------- SETTINGS ---------------- */
+function loadSettings(){
+  try{
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if(raw) state.settings = Object.assign(state.settings, JSON.parse(raw));
+  }catch(e){ console.error('Ayarlar okunamadı', e); }
+}
+function openSettings(){
+  document.getElementById('set_groqKey').value = state.settings.groqKey || '';
+  document.getElementById('set_falKey').value = state.settings.falKey || '';
+  document.getElementById('set_discordWebhook').value = state.settings.discordWebhook || '';
+  document.getElementById('set_genericWebhook').value = state.settings.genericWebhook || '';
+  document.getElementById('set_twitterToken').value = state.settings.twitterToken || '';
+  document.getElementById('set_instagramToken').value = state.settings.instagramToken || '';
+  document.getElementById('settingsModal').classList.add('open');
+}
+function closeSettings(){
+  document.getElementById('settingsModal').classList.remove('open');
+}
+function saveSettings(){
+  state.settings.groqKey = document.getElementById('set_groqKey').value.trim();
+  state.settings.falKey = document.getElementById('set_falKey').value.trim();
+  state.settings.discordWebhook = document.getElementById('set_discordWebhook').value.trim();
+  state.settings.genericWebhook = document.getElementById('set_genericWebhook').value.trim();
+  state.settings.twitterToken = document.getElementById('set_twitterToken').value.trim();
+  state.settings.instagramToken = document.getElementById('set_instagramToken').value.trim();
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings));
+  updateStatusDot();
+  showToast('Ayarlar kaydedildi kanka 👌');
+  closeSettings();
+}
+function clearSettings(){
+  if(!confirm('Emin misin Kadir? Tüm API key, geçmiş ve kuyruk silinecek.')) return;
+  localStorage.removeItem(SETTINGS_KEY);
+  localStorage.removeItem(SESSIONS_KEY);
+  localStorage.removeItem('kanka_postqueue_v1');
+  location.reload();
+}
+function updateStatusDot(){
+  const dot = document.getElementById('groqStatusDot');
+  const txt = document.getElementById('groqStatusText');
+  if(state.settings.groqKey){
+    dot.classList.remove('off');
+    txt.textContent = 'Groq API bağlı';
+  }else{
+    dot.classList.add('off');
+    txt.textContent = 'Groq Key girilmedi';
+  }
+}
+
+/* ---------------- TOAST ---------------- */
+function showToast(msg, isErr){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.toggle('err', !!isErr);
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=> t.classList.remove('show'), 3200);
+}
+
+/* ---------------- TABS ---------------- */
+function switchTab(tab){
+  state.currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b=> b.classList.toggle('active', b.dataset.tab===tab));
+  document.querySelectorAll('.tab-content').forEach(s=> s.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+}
+
+/* ---------------- SIDEBAR NAV ACTIVE STATE ---------------- */
+function setNavActive(name){
+  document.querySelectorAll('.nav-btn').forEach(b=> b.classList.remove('active'));
+  const el = document.querySelector('[data-nav="'+name+'"]');
+  if(el) el.classList.add('active');
+}
+
+/* ---------------- AUTONOMOUS MODE ---------------- */
+function toggleAutonomous(e){
+  state.autonomous = !state.autonomous;
+  document.getElementById('autoToggle').classList.toggle('on', state.autonomous);
+  document.getElementById('agentPill').classList.toggle('show', state.autonomous);
+  showToast(state.autonomous ? 'Otonom Agent Modu AÇIK — komutları otomatik yürütürüm 🤖' : 'Otonom Agent Modu KAPALI');
+}
+
+/* ---------------- SESSIONS / HISTORY ---------------- */
+function loadSessions(){
+  try{
+    const raw = localStorage.getItem(SESSIONS_KEY);
+    state.sessions = raw ? JSON.parse(raw) : [];
+  }catch(e){ state.sessions = []; }
+}
+function persistSessions(){
+  localStorage.setItem(SESSIONS_KEY, JSON.stringify(state.sessions));
+}
+function saveCurrentSessionIfNeeded(){
+  if(state.messages.length === 0) return;
+  let existing = state.sessions.find(s=> s.id === state.currentSessionId);
+  const title = state.messages.find(m=>m.role==='user')?.content?.slice(0,42) || 'Yeni Sohbet';
+  if(existing){
+    existing.messages = state.messages;
+    existing.updatedAt = Date.now();
+  }else{
+    state.sessions.unshift({ id: state.currentSessionId, title, messages: state.messages, updatedAt: Date.now() });
+  }
+  persistSessions();
+  renderSidebarHistory();
+}
+function newChat(){
+  saveCurrentSessionIfNeeded();
+  state.currentSessionId = 'sess_' + Date.now() + '_' + Math.floor(Math.random()*9999);
+  state.messages = [];
+  renderChat();
+  setNavActive('newchat');
+  switchTab('chat');
+}
+function loadSession(id){
+  saveCurrentSessionIfNeeded();
+  const s = state.sessions.find(x=> x.id === id);
+  if(!s) return;
+  state.currentSessionId = s.id;
+  state.messages = s.messages;
+  renderChat();
+  switchTab('chat');
+}
+function deleteSession(id, ev){
+  ev.stopPropagation();
+  state.sessions = state.sessions.filter(s=> s.id !== id);
+  persistSessions();
+  renderSidebarHistory();
+}
+function toggleHistory(){
+  document.getElementById('historyPanel').classList.toggle('open');
+  setNavActive('history');
+}
+function renderSidebarHistory(){
+  const panel = document.getElementById('historyPanel');
+  panel.innerHTML = '';
+  if(state.sessions.length === 0){
+    panel.innerHTML = '<div class="history-empty">Henüz sohbet geçmişi yok kanka.</div>';
+    return;
+  }
+  state.sessions.slice(0,25).forEach(s=>{
+    const div = document.createElement('div');
+    div.className = 'history-item';
+    div.style.display='flex'; div.style.justifyContent='space-between'; div.style.alignItems='center';
+    div.innerHTML = '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(s.title || 'Sohbet')+'</span><span class="qi-del" onclick="deleteSession(\''+s.id+'\', event)">✕</span>';
+    div.onclick = ()=> loadSession(s.id);
+    panel.appendChild(div);
+  });
+}
+
+/* ---------------- CHAT RENDER ---------------- */
+function autoGrow(el){
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+}
+function handleChatKey(e){
+  if(e.key === 'Enter' && !e.shiftKey){
+    e.preventDefault();
+    sendMessage();
+  }
+}
+function quickPrompt(text){
+  document.getElementById('chatInput').value = text;
+  sendMessage();
+}
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str == null ? '' : String(str);
+  return d.innerHTML;
+}
+function renderChat(){
+  const inner = document.getElementById('chatInner');
+  if(state.messages.length === 0){
+    inner.innerHTML = document.getElementById('chatEmpty').outerHTML;
+    return;
+  }
+  inner.innerHTML = '';
+  state.messages.forEach(m=> inner.appendChild(buildMsgNode(m)));
+  scrollChatToBottom();
+}
+function buildMsgNode(m){
+  const row = document.createElement('div');
+  row.className = 'msg-row ' + (m.role === 'user' ? 'user' : 'bot');
+  const av = document.createElement('div');
+  av.className = 'avatar ' + (m.role === 'user' ? 'user' : 'bot');
+  av.textContent = m.role === 'user' ? 'K' : 'AI';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  let inner = '';
+  if(m.tag) inner += '<span class="meta-tag">'+escapeHtml(m.tag)+'</span>';
+  inner += escapeHtml(m.content).replace(/\n/g,'<br>');
+  if(m.imageUrl){
+    inner += '<img class="chat-img" src="'+m.imageUrl+'" alt="üretilen görsel">';
+  }
+  bubble.innerHTML = inner;
+  row.appendChild(av);
+  row.appendChild(bubble);
+  return row;
+}
+function appendMessage(role, content, opts){
+  opts = opts || {};
+  const msg = { role, content, tag: opts.tag || null, imageUrl: opts.imageUrl || null, id: 'm_'+Date.now()+Math.random() };
+  state.messages.push(msg);
+  const inner = document.getElementById('chatInner');
+  const empty = document.getElementById('chatEmpty');
+  if(empty && inner.contains(empty)) inner.innerHTML = '';
+  inner.appendChild(buildMsgNode(msg));
+  scrollChatToBottom();
+  return msg;
+}
+function scrollChatToBottom(){
+  const win = document.getElementById('chatWindow');
+  win.scrollTop = win.scrollHeight + 200;
+}
+function showTyping(){
+  const inner = document.getElementById('chatInner');
+  const row = document.createElement('div');
+  row.className = 'msg-row bot';
+  row.id = 'typingRow';
+  row.innerHTML = '<div class="avatar bot">AI</div><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>';
+  inner.appendChild(row);
+  scrollChatToBottom();
+}
+function hideTyping(){
+  const row = document.getElementById('typingRow');
+  if(row) row.remove();
+}
+
+/* ---------------- GROQ CHAT CALL ---------------- */
+async function callGroq(messages, opts){
+  opts = opts || {};
+  if(!state.settings.groqKey){
+    throw new Error('NO_KEY');
+  }
+  const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'Authorization':'Bearer ' + state.settings.groqKey
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: messages,
+      temperature: opts.temperature != null ? opts.temperature : 0.85,
+      max_tokens: opts.maxTokens || 1024
+    })
+  });
+  if(!resp.ok){
+    const errBody = await resp.text().catch(()=> '');
+    throw new Error('GROQ_HTTP_' + resp.status + ': ' + errBody.slice(0,200));
+  }
+  const data = await resp.json();
+  const content = data && data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : null;
+  if(!content) throw new Error('GROQ_EMPTY_RESPONSE');
+  return content;
+}
+
+/* ---------------- INTENT DETECTION (Otonom Mod) ---------------- */
+function detectIntent(text){
+  const t = text.toLowerCase();
+  const imageWords = ['resim çiz','resim yap','görsel oluştur','görsel üret','image oluştur','fotoğraf oluştur','çizer misin','çiz bakalım'];
+  const videoWords = ['video üret','video oluştur','video yap','video çek'];
+  const searchWords = ['araştır','ara bakalım','web\'de ara','internetten ara','güncel bilgi','son dakika','haberlerini bul','search yap'];
+  if(imageWords.some(w=> t.includes(w))) return 'image';
+  if(videoWords.some(w=> t.includes(w))) return 'video';
+  if(searchWords.some(w=> t.includes(w))) return 'search';
+  return 'chat';
+}
+
+/* ---------------- SEND MESSAGE (main chat flow) ---------------- */
+async function sendMessage(){
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if(!text) return;
+  if(!state.settings.groqKey){
+    showToast('Önce Ayarlar\'dan Groq API Key gir kanka 🔑', true);
+    openSettings();
+    return;
+  }
+  appendMessage('user', text);
+  if(!state.currentSessionId) state.currentSessionId = 'sess_' + Date.now();
+  input.value = '';
+  autoGrow(input);
+  document.getElementById('sendBtn').disabled = true;
+
+  try{
+    let intent = state.autonomous ? detectIntent(text) : 'chat';
+
+    if(intent === 'image'){
+      appendMessage('assistant', 'Tamam kanka, hemen çiziyorum, saniyeler sürer 🎨', { tag:'OTONOM AGENT · GÖRSEL' });
+      showTyping();
+      const url = buildPollinationsUrl(text, '1024x1024');
+      hideTyping();
+      appendMessage('assistant', 'İşte istediğin görsel 👇', { imageUrl:url, tag:'GÖRSEL ÜRETİLDİ' });
+      addToGallery('img', url, text);
+      saveCurrentSessionIfNeeded();
+    } else if(intent === 'video'){
+      appendMessage('assistant', 'Video prompt\'unu Görsel & Video Stüdyosu\'na aktardım, oradan üretebilirsin — Fal.ai key\'in ayarlarda kayıtlıysa direkt orada da tetikleyebilirim.', { tag:'OTONOM AGENT · VİDEO' });
+      document.getElementById('vidPrompt').value = text;
+      switchTab('media');
+      saveCurrentSessionIfNeeded();
+    } else if(intent === 'search'){
+      appendMessage('assistant', 'Anladım, hemen web\'e dalıyorum, birazdan özetle dönerim 🔎', { tag:'OTONOM AGENT · ARAMA' });
+      showTyping();
+      try{
+        const searchData = await performWebSearch(text);
+        const contextMsg = 'Aşağıda "' + text + '" için yaptığım canlı web araması sonuçları var:\n\n' + searchData.contextText + '\n\nBu bilgileri kullanarak Kadir\'e KANKA.AI üslubunda, samimi ve net bir özet/cevap ver.';
+        const messages = buildGroqMessages(contextMsg);
+        const reply = await callGroq(messages);
+        hideTyping();
+        appendMessage('assistant', reply, { tag:'WEB ARAMASI İLE YANITLANDI' });
+      }catch(searchErr){
+        hideTyping();
+        appendMessage('assistant', 'Arama tarafında bi\' sıçtık galiba: ' + searchErr.message + '. Yine de bildiklerimle cevap vereyim mi diye soracaktım ama direkt deniyorum kanka.');
+        const fallback = await callGroq(buildGroqMessages(text));
+        appendMessage('assistant', fallback);
+      }
+      saveCurrentSessionIfNeeded();
+    } else {
+      showTyping();
+      const reply = await callGroq(buildGroqMessages(text));
+      hideTyping();
+      appendMessage('assistant', reply);
+      saveCurrentSessionIfNeeded();
+    }
+  }catch(err){
+    hideTyping();
+    let msg = 'Bir hata oldu kanka: ' + err.message;
+    if(err.message === 'NO_KEY') msg = 'Groq API Key girmemişsin, Ayarlar\'a gidip ekle de konuşalım 🔑';
+    appendMessage('assistant', msg);
+  }finally{
+    document.getElementById('sendBtn').disabled = false;
+  }
+}
+function buildGroqMessages(latestUserText){
+  const history = state.messages
+    .filter(m=> m.role==='user' || m.role==='assistant')
+    .slice(-14)
+    .map(m=> ({ role: m.role, content: m.content }));
+  const msgs = [{ role:'system', content: SYSTEM_PROMPT }, ...history];
+  if(msgs[msgs.length-1] && msgs[msgs.length-1].content !== latestUserText){
+    msgs.push({ role:'user', content: latestUserText });
+  }
+  return msgs;
+}
+
+/* ---------------- IMAGE GENERATION (Pollinations) ---------------- */
+function buildPollinationsUrl(prompt, size){
+  const dims = (size || '1024x1024').split('x');
+  const w = dims[0], h = dims[1];
+  const seed = Math.floor(Math.random()*1000000);
+  return 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt) + '?width=' + w + '&height=' + h + '&nologo=true&seed=' + seed;
+}
+function generateImage(){
+  const prompt = document.getElementById('imgPrompt').value.trim();
+  if(!prompt){ showToast('Önce bir prompt yaz kanka', true); return; }
+  const size = document.getElementById('imgRatio').value;
+  const loader = document.getElementById('imgLoader');
+  loader.innerHTML = '<div class="loader-box"><div class="spinner"></div> Görsel oluşturuluyor...</div>';
+  const url = buildPollinationsUrl(prompt, size);
+  const img = new Image();
+  img.onload = ()=>{
+    loader.innerHTML = '';
+    addToGallery('img', url, prompt);
+    showToast('Görsel hazır! 🎉');
+  };
+  img.onerror = ()=>{
+    loader.innerHTML = '<div class="loader-box" style="color:var(--danger);">Görsel yüklenemedi, tekrar dene.</div>';
+  };
+  img.src = url;
+}
+function addToGallery(type, url, caption){
+  const gallery = document.getElementById(type==='img' ? 'imgGallery' : 'vidGallery');
+  const item = document.createElement('div');
+  item.className = 'g-item';
+  if(type==='img'){
+    item.innerHTML = '<img src="'+url+'" alt="üretilen görsel"><a class="g-dl" href="'+url+'" download target="_blank">⬇ İndir</a><div class="g-cap">'+escapeHtml(caption).slice(0,80)+'</div>';
+  }else{
+    item.innerHTML = '<video src="'+url+'" controls></video><a class="g-dl" href="'+url+'" download target="_blank">⬇ İndir</a><div class="g-cap">'+escapeHtml(caption).slice(0,80)+'</div>';
+  }
+  gallery.prepend(item);
+}
+
+/* ---------------- VIDEO GENERATION (Fal.ai) ---------------- */
+async function generateVideo(){
+  const prompt = document.getElementById('vidPrompt').value.trim();
+  const model = document.getElementById('vidModel').value.trim();
+  if(!prompt){ showToast('Video prompt\'u boş olamaz', true); return; }
+  if(!state.settings.falKey){
+    showToast('Ayarlar\'dan Fal.ai API Key gir kanka', true);
+    openSettings();
+    return;
+  }
+  const loader = document.getElementById('vidLoader');
+  loader.innerHTML = '<div class="loader-box"><div class="spinner"></div> Video üretiliyor, bu biraz sürebilir...</div>';
+  try{
+    const resp = await fetch('https://fal.run/' + model, {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Key ' + state.settings.falKey
+      },
+      body: JSON.stringify({ prompt: prompt })
+    });
+    if(!resp.ok){
+      const errTxt = await resp.text().catch(()=> '');
+      throw new Error('Fal.ai HTTP ' + resp.status + ' — ' + errTxt.slice(0,180));
+    }
+    const data = await resp.json();
+    const videoUrl = (data.video && data.video.url) || (data.output && data.output.video_url) || data.video_url || (Array.isArray(data.videos) ? data.videos[0]?.url : null);
+    loader.innerHTML = '';
+    if(videoUrl){
+      addToGallery('vid', videoUrl, prompt);
+      showToast('Video hazır! 🎬');
+    }else{
+      loader.innerHTML = '<div class="loader-box" style="color:var(--danger);">Model cevap verdi ama video URL\'i bulunamadı. Ham cevap konsola yazıldı.</div>';
+      console.log('Fal.ai raw response:', data);
+    }
+  }catch(err){
+    loader.innerHTML = '<div class="loader-box" style="color:var(--danger);">Video üretilemedi: ' + escapeHtml(err.message) + '. Not: bazı tarayıcılar Fal.ai\'nin CORS politikası yüzünden isteği engelleyebilir; böyle durumda bir backend proxy gerekir.</div>';
+  }
+}
+
+/* ---------------- WEB AGENT: SEARCH ---------------- */
+async function performWebSearch(query){
+  let results = [];
+  let contextText = '';
+  try{
+    const ddgResp = await fetch('https://api.duckduckgo.com/?q=' + encodeURIComponent(query) + '&format=json&no_html=1&skip_disambig=1');
+    if(ddgResp.ok){
+      const ddg = await ddgResp.json();
+      if(ddg.AbstractText){
+        results.push({ title: ddg.Heading || query, url: ddg.AbstractURL || '', snippet: ddg.AbstractText });
+      }
+      if(Array.isArray(ddg.RelatedTopics)){
+        ddg.RelatedTopics.slice(0,6).forEach(rt=>{
+          if(rt.Text && rt.FirstURL){
+            results.push({ title: rt.Text.split(' - ')[0], url: rt.FirstURL, snippet: rt.Text });
+          }
+        });
+      }
+    }
+  }catch(e){ console.warn('DuckDuckGo aramasi basarisiz', e); }
+
+  try{
+    const wikiResp = await fetch('https://tr.wikipedia.org/w/api.php?origin=*&action=query&list=search&srsearch=' + encodeURIComponent(query) + '&format=json&srlimit=4');
+    if(wikiResp.ok){
+      const wiki = await wikiResp.json();
+      if(wiki.query && wiki.query.search){
+        wiki.query.search.forEach(w=>{
+          const snippet = w.snippet.replace(/<[^>]+>/g,'');
+          results.push({ title: w.title, url: 'https://tr.wikipedia.org/wiki/' + encodeURIComponent(w.title.replace(/ /g,'_')), snippet });
+        });
+      }
+    }
+  }catch(e){ console.warn('Wikipedia aramasi basarisiz', e); }
+
+  if(results.length === 0){
+    throw new Error('Hiç sonuç bulunamadı, sorguyu değiştirip tekrar dene');
+  }
+  contextText = results.slice(0,10).map((r,i)=> (i+1)+'. '+r.title+' ('+r.url+'): '+r.snippet).join('\n');
+  return { results, contextText };
+}
+
+async function runWebSearch(){
+  const query = document.getElementById('searchQuery').value.trim();
+  if(!query){ showToast('Önce bir arama sorgusu yaz', true); return; }
+  const loader = document.getElementById('searchLoader');
+  const summaryBox = document.getElementById('searchSummary');
+  const resultsBox = document.getElementById('searchResults');
+  loader.innerHTML = '<div class="loader-box"><div class="spinner"></div> Web taranıyor...</div>';
+  summaryBox.innerHTML = '';
+  resultsBox.innerHTML = '';
+  try{
+    const data = await performWebSearch(query);
+    resultsBox.innerHTML = data.results.slice(0,10).map(r=>
+      '<div class="log-card"><div class="lc-title">'+escapeHtml(r.title)+'</div>' +
+      (r.url ? '<div class="lc-url">'+escapeHtml(r.url)+'</div>' : '') +
+      '<div class="lc-body">'+escapeHtml(r.snippet)+'</div></div>'
+    ).join('');
+
+    if(state.settings.groqKey){
+      loader.innerHTML = '<div class="loader-box"><div class="spinner"></div> KANKA.AI sonuçları özetliyor...</div>';
+      const prompt = '"' + query + '" için canlı arama sonuçları:\n\n' + data.contextText + '\n\nBu bilgileri KANKA.AI üslubunda (Kadir\'e argo, samimi ama net) kısa bir özet halinde sun.';
+      const summary = await callGroq([{ role:'system', content: SYSTEM_PROMPT }, { role:'user', content: prompt }]);
+      summaryBox.innerHTML = '<div class="log-card" style="border-color:var(--green);"><div class="lc-title">🤖 KANKA.AI Özeti</div><div class="lc-body">'+escapeHtml(summary)+'</div></div>';
+    }
+    loader.innerHTML = '';
+  }catch(err){
+    loader.innerHTML = '<div class="loader-box" style="color:var(--danger);">Arama başarısız: ' + escapeHtml(err.message) + '</div>';
+  }
+}
+
+/* ---------------- WEB AGENT: SITE SUMMARIZER ---------------- */
+async function summarizeSite(){
+  const url = document.getElementById('siteUrl').value.trim();
+  if(!url){ showToast('Bir URL gir kanka', true); return; }
+  if(!state.settings.groqKey){ showToast('Özetleme için Groq Key gerekli', true); openSettings(); return; }
+  const loader = document.getElementById('siteLoader');
+  const resultsBox = document.getElementById('siteResults');
+  resultsBox.innerHTML = '';
+  loader.innerHTML = '<div class="loader-box"><div class="spinner"></div> Sayfa çekiliyor...</div>';
+  try{
+    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+    const resp = await fetch(proxyUrl);
+    if(!resp.ok) throw new Error('Sayfa alınamadı (HTTP ' + resp.status + ')');
+    let html = await resp.text();
+    let text = html
+      .replace(/<script[\s\S]*?<\/script>/gi,' ')
+      .replace(/<style[\s\S]*?<\/style>/gi,' ')
+      .replace(/<[^>]+>/g,' ')
+      .replace(/\s+/g,' ')
+      .trim();
+    text = text.slice(0, 6000);
+    if(!text){ throw new Error('Sayfadan metin çıkarılamadı'); }
+
+    loader.innerHTML = '<div class="loader-box"><div class="spinner"></div> KANKA.AI özetliyor...</div>';
+    const prompt = 'Aşağıda bir web sayfasından çekilen ham metin var. Bunu KANKA.AI üslubunda (Kadir\'e samimi, net, maddeler halinde) 5-8 cümlelik bir özete çevir:\n\n' + text;
+    const summary = await callGroq([{ role:'system', content: SYSTEM_PROMPT }, { role:'user', content: prompt }]);
+    loader.innerHTML = '';
+    resultsBox.innerHTML = '<div class="log-card" style="border-color:var(--purple);"><div class="lc-title">📄 Site Özeti</div><div class="lc-url">'+escapeHtml(url)+'</div><div class="lc-body">'+escapeHtml(summary)+'</div></div>';
+  }catch(err){
+    loader.innerHTML = '<div class="loader-box" style="color:var(--danger);">Özetlenemedi: ' + escapeHtml(err.message) + '</div>';
+  }
+}
+
+/* ---------------- SOCIAL AUTOPILOT ---------------- */
+function selectPlatform(p){
+  state.selectedPlatform = p;
+  document.querySelectorAll('.plat-card').forEach(c=> c.classList.toggle('sel', c.dataset.plat === p));
+}
+function loadPostQueue(){
+  try{
+    const raw = localStorage.getItem('kanka_postqueue_v1');
+    state.postQueue = raw ? JSON.parse(raw) : [];
+  }catch(e){ state.postQueue = []; }
+}
+function persistPostQueue(){
+  localStorage.setItem('kanka_postqueue_v1', JSON.stringify(state.postQueue));
+}
+function queuePost(){
+  const content = document.getElementById('postContent').value.trim();
+  const imageUrl = document.getElementById('postImage').value.trim();
+  const schedule = document.getElementById('postSchedule').value;
+  if(!content && !imageUrl){ showToast('Boş gönderi paylaşamayız kanka', true); return; }
+  const post = {
+    id: 'post_' + Date.now(),
+    platform: state.selectedPlatform,
+    content, imageUrl,
+    scheduledAt: schedule ? new Date(schedule).getTime() : null,
+    status: schedule ? 'pending' : 'pending',
+    createdAt: Date.now(),
+    resultMsg: ''
+  };
+  state.postQueue.unshift(post);
+  persistPostQueue();
+  renderPostQueue();
+  document.getElementById('postContent').value = '';
+  document.getElementById('postImage').value = '';
+  document.getElementById('postSchedule').value = '';
+
+  if(!post.scheduledAt || post.scheduledAt <= Date.now()){
+    executePost(post.id);
+  }else{
+    showToast('Gönderi planlandı: ' + new Date(post.scheduledAt).toLocaleString('tr-TR'));
+  }
+}
+async function executePost(postId){
+  const post = state.postQueue.find(p=> p.id === postId);
+  if(!post) return;
+  try{
+    if(post.platform === 'discord'){
+      await postToDiscord(post.content, post.imageUrl);
+      post.status = 'ok'; post.resultMsg = 'Discord\'a gönderildi ✅';
+    } else if(post.platform === 'webhook'){
+      await postToGenericWebhook(post);
+      post.status = 'ok'; post.resultMsg = 'Webhook\'a gönderildi ✅';
+    } else if(post.platform === 'twitter'){
+      await postToTwitter(post);
+      post.status = 'ok'; post.resultMsg = 'X\'e gönderildi ✅';
+    } else if(post.platform === 'instagram'){
+      await postToInstagram(post);
+      post.status = 'ok'; post.resultMsg = 'Instagram\'a gönderildi ✅';
+    }
+    showToast('Paylaşım tamamlandı 🚀');
+  }catch(err){
+    post.status = 'err';
+    post.resultMsg = err.message;
+    showToast('Paylaşım başarısız: ' + err.message, true);
+  }
+  persistPostQueue();
+  renderPostQueue();
+}
+async function postToDiscord(content, imageUrl){
+  if(!state.settings.discordWebhook) throw new Error('Discord Webhook URL Ayarlar\'da tanımlı değil');
+  const payload = { content: content || '', embeds: imageUrl ? [{ image:{ url: imageUrl } }] : [] };
+  const resp = await fetch(state.settings.discordWebhook, {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if(!resp.ok && resp.status !== 204) throw new Error('Discord HTTP ' + resp.status);
+}
+async function postToGenericWebhook(post){
+  if(!state.settings.genericWebhook) throw new Error('Genel Webhook URL Ayarlar\'da tanımlı değil');
+  const resp = await fetch(state.settings.genericWebhook, {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify({ content: post.content, imageUrl: post.imageUrl, platform:'kanka.ai', timestamp: Date.now() })
+  });
+  if(!resp.ok) throw new Error('Webhook HTTP ' + resp.status);
+}
+async function postToTwitter(post){
+  if(!state.settings.twitterToken) throw new Error('X (Twitter) token Ayarlar\'da tanımlı değil');
+  try{
+    const resp = await fetch('https://api.twitter.com/2/tweets', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + state.settings.twitterToken },
+      body: JSON.stringify({ text: post.content })
+    });
+    if(!resp.ok) throw new Error('X API HTTP ' + resp.status);
+  }catch(err){
+    throw new Error('X, tarayıcıdan doğrudan paylaşıma CORS/OAuth kısıtı koyuyor. Gerçek paylaşım için bir backend/proxy sunucusu şart. (' + err.message + ')');
+  }
+}
+async function postToInstagram(post){
+  if(!state.settings.instagramToken) throw new Error('Instagram token Ayarlar\'da tanımlı değil');
+  try{
+    const resp = await fetch('https://graph.facebook.com/v19.0/me/media', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ image_url: post.imageUrl, caption: post.content, access_token: state.settings.instagramToken })
+    });
+    if(!resp.ok) throw new Error('Instagram Graph API HTTP ' + resp.status);
+  }catch(err){
+    throw new Error('Instagram Graph API, tarayıcıdan CORS kısıtlı çalışır ve iki adımlı (media oluştur + publish) bir akış gerektirir. Gerçek paylaşım için backend/proxy şart. (' + err.message + ')');
+  }
+}
+function checkScheduledPosts(){
+  const now = Date.now();
+  state.postQueue.forEach(p=>{
+    if(p.status === 'pending' && p.scheduledAt && p.scheduledAt <= now){
+      executePost(p.id);
+    }
+  });
+}
+function deletePost(id, ev){
+  ev.stopPropagation();
+  state.postQueue = state.postQueue.filter(p=> p.id !== id);
+  persistPostQueue();
+  renderPostQueue();
+}
+function renderPostQueue(){
+  const box = document.getElementById('postQueue');
+  if(state.postQueue.length === 0){
+    box.innerHTML = '<div class="history-empty">Kuyrukta gönderi yok. Yukarıdan ilk paylaşımını oluştur kanka.</div>';
+    return;
+  }
+  box.innerHTML = state.postQueue.map(p=>{
+    const statusClass = p.status === 'ok' ? 'ok' : (p.status === 'err' ? 'err' : 'pending');
+    const statusLabel = p.status === 'ok' ? 'Paylaşıldı' : (p.status === 'err' ? 'Hata' : (p.scheduledAt ? 'Planlandı' : 'Bekliyor'));
+    const timeInfo = p.scheduledAt ? new Date(p.scheduledAt).toLocaleString('tr-TR') : new Date(p.createdAt).toLocaleString('tr-TR');
+    return '<div class="queue-item">' +
+      '<div class="qi-body">' +
+        '<div class="qi-plat">' + escapeHtml(p.platform) + '</div>' +
+        '<div class="qi-text">' + escapeHtml(p.content || '(içerik yok, sadece görsel)') + '</div>' +
+        '<div class="qi-meta">' + timeInfo + (p.resultMsg ? ' · ' + escapeHtml(p.resultMsg) : '') + '</div>' +
+      '</div>' +
+      '<span class="qi-status ' + statusClass + '">' + statusLabel + '</span>' +
+      '<span class="qi-del" onclick="deletePost(\'' + p.id + '\', event)">✕</span>' +
+    '</div>';
+  }).join('');
+}
+
+/* ---------------- STARTUP ---------------- */
+window.addEventListener('DOMContentLoaded', initApp);
+</script>
+</body>
+</html>
